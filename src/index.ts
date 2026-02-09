@@ -3,6 +3,8 @@ import { pool } from "./db";
 import { menuHandlers } from "./handlers/menu.handler";
 import { featureHandlers } from "./handlers/feature.handler";
 
+const port = process.env.PORT || 3000;
+
 const app = new Elysia()
 
   // macam-macam get
@@ -20,7 +22,7 @@ const app = new Elysia()
   // Menu API endpoints
   .get("/api/menus", menuHandlers.getAllMenus)
   .get("/api/features", featureHandlers.getAllFeature)
-  .listen(3000);
+  .listen(port);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
