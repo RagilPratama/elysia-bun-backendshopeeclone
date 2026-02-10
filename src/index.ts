@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { swagger } from "@elysiajs/swagger";
 import { pool } from "./db";
 import { connectRedis, disconnectRedis, redisClient } from "./redis";
 import { menuHandlers } from "./handlers/menu.handler";
@@ -10,6 +11,16 @@ const port = process.env.PORT || 3000;
 await connectRedis();
 
 const app = new Elysia()
+  .use(swagger({
+    path: "/swagger",
+    documentation: {
+      info: {
+        title: "Myfirst Elysia API",
+        version: "1.0.0",
+        description: "API documentation untuk Myfirst Elysia dengan Redis caching",
+      },
+    },
+  }))
 
   // macam-macam get
   .get("/", () => "Hello Elysia")
@@ -27,14 +38,38 @@ const app = new Elysia()
   .get("/api/cache/keys", async () => {
     const keys = await redisClient.keys("*");
     return { keys, total: keys.length };
+  }, {
+    detail: {
+      tags: ["Cache"],
+      summary: "Get all Redis cache keys",
+      description: "Menampilkan semua keys yang tersimpan di Redis cache",
+    },
   })
   .get("/api/cache/:key", async ({ params }) => {
-  const value = await redisClient.get(params.key);
-  return { key: params.key, value: value ? JSON.parse(value) : null };
+    const value = await redisClient.get(params.key);
+    return { key: params.key, value: value ? JSON.parse(value) : null };
+  }, {
+    detail: {
+      tags: ["Cache"],
+      summary: "Get cache value by key",
+      description: "Menampilkan nilai cache berdasarkan key yang diberikan",
+    },
   })
   // Menu API endpoints
-  .get("/api/menus", menuHandlers.getAllMenus)
-  .get("/api/features", featureHandlers.getAllFeature)
+  .get("/api/menus", menuHandlers.getAllMenus, {
+    detail: {
+      tags: ["Menus"],
+      summary: "Get all menus",
+      description: "Mengambil semua data menu dengan caching Redis 5 Menit",
+    },
+  })
+  .get("/api/features", featureHandlers.getAllFeature, {
+    detail: {
+      tags: ["Features"],
+      summary: "Get all features",
+      description: "Mengambil semua data fitur",
+    },
+  })
   .listen(port);
 
 
