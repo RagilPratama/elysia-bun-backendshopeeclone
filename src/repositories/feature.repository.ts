@@ -1,16 +1,10 @@
-import { pool } from "../db";
-import type { Feature } from "../types/feature";
+import { db } from "../db";
+import { features } from "../db/schema";
+import { asc } from "drizzle-orm";
 
 export class FeatureRepository {
-  async getAllFeatures(): Promise<Feature[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        "SELECT * FROM features ORDER BY id ASC"
-      );
-      return result.rows;
-    } finally {
-      client.release();
-    }
+  async getAllFeatures() {
+    const result = await db.select().from(features).orderBy(asc(features.id));
+    return result;
   }
 }

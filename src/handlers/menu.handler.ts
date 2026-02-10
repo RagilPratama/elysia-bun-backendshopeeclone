@@ -9,7 +9,6 @@ export const menuHandlers = {
       return {
         success: true,
         data: menus,
-        total: menus.length,
       };
     } catch (error) {
       console.error("Error fetching menus:", error);

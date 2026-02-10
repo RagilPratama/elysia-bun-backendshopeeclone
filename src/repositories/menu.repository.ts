@@ -1,14 +1,18 @@
-import { pool } from "../db";
-import type { Menu } from "../types/menu";
+import { db } from "../db";
+import { menus } from "../db/schema";
 import { getCache, setCache, deleteCache } from "../redis";
+import { dumpQuery, dumpResult } from "../utils/logger";
+import { asc } from "drizzle-orm";
 
 const MENUS_CACHE_KEY = "menus:all";
-const MENUS_CACHE_TTL = 300; 
+const MENUS_CACHE_TTL = 60;
 
 export class MenuRepository {
-  async getAllMenus(): Promise<Menu[]> {
+  async getAllMenus() {
+    // await deleteCache(MENUS_CACHE_KEY);
+
     try {
-      const cachedMenus = await getCache<Menu[]>(MENUS_CACHE_KEY);
+      const cachedMenus = await getCache(MENUS_CACHE_KEY);
       if (cachedMenus) {
         console.log("Dari Cache");
         return cachedMenus;
@@ -17,19 +21,14 @@ export class MenuRepository {
       console.warn("Cache Gagal konek langsung ke database:", error);
     }
 
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        "SELECT * FROM menus ORDER BY id ASC"
-      );
-      const menus = result.rows;
-
-      await setCache(MENUS_CACHE_KEY, menus, MENUS_CACHE_TTL);
-      console.log("Menus cached sukses");
-      return menus;
-    } finally {
-      client.release();
-    }
+    const query = db.select().from(menus).orderBy(asc(menus.id));
+    const sqlQuery = query.toSQL();
+    dumpQuery(sqlQuery);
+    const result = await query;
+    dumpResult(result, "Data Menus");
+    await setCache(MENUS_CACHE_KEY, result, MENUS_CACHE_TTL);
+    console.log("Menus cached sukses");
+    return result;
   }
 
   async invalidateMenuCache(): Promise<void> {
