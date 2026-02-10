@@ -5,7 +5,7 @@ import { dumpQuery, dumpResult } from "../utils/logger";
 import { asc } from "drizzle-orm";
 
 const MENUS_CACHE_KEY = "menus:all";
-const MENUS_CACHE_TTL = 60;
+const MENUS_CACHE_TTL = 300;
 
 export class MenuRepository {
   async getAllMenus() {
@@ -30,7 +30,7 @@ export class MenuRepository {
     })
     .from(menus)
     .orderBy(asc(menus.id));
-    
+
     // const sqlQuery = query.toSQL();
     // dumpQuery(sqlQuery);
     const result = await query;
