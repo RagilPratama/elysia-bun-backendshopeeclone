@@ -11,7 +11,6 @@ export const menuHandlers = {
         data: menus,
       };
     } catch (error) {
-      console.error("Error fetching menus:", error);
       return {
         success: false,
         error: "Failed to fetch menus",

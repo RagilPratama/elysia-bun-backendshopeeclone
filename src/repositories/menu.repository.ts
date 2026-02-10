@@ -22,12 +22,12 @@ export class MenuRepository {
     }
 
     const query = db.select().from(menus).orderBy(asc(menus.id));
-    const sqlQuery = query.toSQL();
-    dumpQuery(sqlQuery);
+    // const sqlQuery = query.toSQL();
+    // dumpQuery(sqlQuery);
     const result = await query;
-    dumpResult(result, "Data Menus");
     await setCache(MENUS_CACHE_KEY, result, MENUS_CACHE_TTL);
-    console.log("Menus cached sukses");
+    // dumpResult(result, "Data Menus");
+    // console.log("Menus cached sukses");
     return result;
   }
 
