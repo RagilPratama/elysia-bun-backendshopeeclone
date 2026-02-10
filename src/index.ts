@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { pool } from "./db";
-import { connectRedis, disconnectRedis } from "./redis";
+import { connectRedis, disconnectRedis, redisClient } from "./redis";
 import { menuHandlers } from "./handlers/menu.handler";
 import { featureHandlers } from "./handlers/feature.handler";
 
@@ -22,15 +22,26 @@ const app = new Elysia()
   // Wildcard path - akan match /id/ diikuti apapun (termasuk nested paths)
   .get("/id/*", () => "wildcard path")
   
-  
+
+  //Cek Redis
+  .get("/api/cache/keys", async () => {
+    const keys = await redisClient.keys("*");
+    return { keys, total: keys.length };
+  })
+  .get("/api/cache/:key", async ({ params }) => {
+  const value = await redisClient.get(params.key);
+  return { key: params.key, value: value ? JSON.parse(value) : null };
+  })
   // Menu API endpoints
   .get("/api/menus", menuHandlers.getAllMenus)
   .get("/api/features", featureHandlers.getAllFeature)
   .listen(port);
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+
+  console.log(
+    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  );
+
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
