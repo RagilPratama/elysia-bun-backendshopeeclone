@@ -7,7 +7,7 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get("http://localhost:3000/api/features");
+  const res = http.get("http://localhost:3000/api/products?page=1&limit=10");
 
   check(res, {
     "status is 200": (r) => r.status === 200,
