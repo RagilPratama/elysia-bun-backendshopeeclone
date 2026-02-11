@@ -4,6 +4,7 @@ import { pool } from "./db";
 import { connectRedis, disconnectRedis, redisClient } from "./redis";
 import { menuHandlers } from "./handlers/menu.handler";
 import { featureHandlers } from "./handlers/feature.handler";
+import { productHandlers } from "./handlers/products.handler";
 
 const port = process.env.PORT || 3000;
 
@@ -68,6 +69,13 @@ const app = new Elysia()
       tags: ["Features"],
       summary: "Get all features",
       description: "Mengambil semua data fitur",
+    },
+  })
+  .get("/api/products", productHandlers.getAllProducts, {
+    detail: {
+      tags: ["Products"],
+      summary: "Get all products",
+      description: "Mengambil semua data produk",
     },
   })
   .listen(port);
