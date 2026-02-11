@@ -1,10 +1,25 @@
 import { db } from "../db";
 import { products, shops } from "../db/schema";
 import { asc, eq, count } from "drizzle-orm";
+import { getCache, setCache, deleteCache } from "../redis";
+
+const CACHE_TTL = 300;
 
 export class ProductRepository {
     async getProduct(page: number = 1, limit: number = 10) {
     const offset = (page - 1) * limit;
+    const cacheKey = `products:page:${page}:limit:${limit}`;
+
+    try {
+        const cached = await getCache(cacheKey);
+        if (cached) {
+            console.log(`Cache hit: products page ${page}`);
+            return cached;
+        }
+            console.log(`Cache miss: products page ${page}`);
+        } catch (error) {
+            console.warn("Cache gagal, fallback ke database:", error);
+    }
 
     const query = db
     .select({
@@ -49,8 +64,7 @@ export class ProductRepository {
 
     const result = await query;
 
-    // Transform hasil untuk nested shopDetail
-    return result.map((row) => ({
+    const transformedData = result.map((row) => ({
         id: row.id,
         title: row.title,
         price: row.price,
@@ -75,17 +89,38 @@ export class ProductRepository {
         durasi: row.durasi,
         ShopID: row.ShopID,
         shopDetail: {
-            name: row.shopName,
-            rating: row.shopRating,
-            productCount: row.shopProductCount,
-            chatPercentage: row.shopChatPercentage,
-            location: row.shopLocation,
+        name: row.shopName,
+        rating: row.shopRating,
+        productCount: row.shopProductCount,
+        chatPercentage: row.shopChatPercentage,
+        location: row.shopLocation,
         },
     }));
+
+    await setCache(cacheKey, transformedData, CACHE_TTL);
+    return transformedData;
     }
 
     async countProducts(): Promise<number> {
-        const result = await db.select({ count: count() }).from(products);
-        return Number(result[0].count);
+    const cacheKey = "products:count";
+
+    try {
+        const cached = await getCache(cacheKey);
+        if (cached) {
+        return Number(cached);
+        }
+    } catch (error) {
+        console.warn("Cache gagal, fallback ke database:", error);
+    }
+    const result = await db.select({ count: count() }).from(products);
+    const total = Number(result[0].count);
+    await setCache(cacheKey, total, CACHE_TTL);
+
+    return total;
+    }
+
+    async invalidateProductCache(): Promise<void> {
+    await deleteCache("products:count");
+        console.log("🗑️ Product cache invalidated");
     }
 }
