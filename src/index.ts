@@ -5,10 +5,15 @@ import { connectRedis, disconnectRedis, redisClient } from "./redis";
 import { menuHandlers } from "./handlers/menu.handler";
 import { featureHandlers } from "./handlers/feature.handler";
 import { productHandlers } from "./handlers/products.handler";
+import { warmupCache } from "./utils/cache-warmer";
+
 const port = process.env.PORT || 3000;
 
 // Connect to Redis on startup
 await connectRedis();
+
+// Warmup cache setelah Redis connect
+warmupCache().catch(console.error);
 
 const app = new Elysia()
   .use(swagger({
@@ -17,7 +22,7 @@ const app = new Elysia()
       info: {
         title: "Myfirst Elysia API",
         version: "1.0.0",
-        description: "API documentation untuk Myfirst Elysia dengan Redis caching",
+        description: "API documentation untuk Myfirst Elysia dengan Redis caching dan Gzip compression",
       },
     },
   }))
@@ -79,8 +84,11 @@ const app = new Elysia()
     detail: {
       tags: ["Products"],
       summary: "Get all products",
-      description: "Mengambil semua data produk",
+      description: "Mengambil semua data produk dengan pagination dan caching",
     },
+  })
+  .get("/test-big", () => {
+    return new Array(1000).fill({ name: "ragil", price: 10000 });
   })
   .listen(port);
 
